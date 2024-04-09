@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="generator" content="Pelican" />
+        <title>This Week in Rust 3</title>
+        <link rel="stylesheet" href="/theme/css/main.css" />
+        <meta name="description" content="Hello and welcome to the third issue of This Week in Rust, a weekly overview of Rust and its community. It has come to my attention that Github..." />
+</head>
+
+<body id="index" class="home">
+        <header id="banner" class="body">
+                <h1><a href="/">pelican test site</a></h1>
+                <nav><ul>
+                    <li><a href="/category/review.html">Review</a></li>
+                    <li class="active"><a href="/category/this-week-in-rust.html">This Week in Rust</a></li>
+                </ul></nav>
+        </header><!-- /#banner -->
+<section id="content" class="body">
+  <article>
+    <header>
+      <h1 class="entry-title">
+        <a href="/this-week-in-rust-3.html" rel="bookmark"
+           title="Permalink to This Week in Rust 3">This Week in Rust 3</a></h1>
+    </header>
+
+    <div class="entry-content">
+<footer class="post-info">
+        <abbr class="published" title="2013-06-22T05:21:00+02:00">
+                Published: 周六 22 六月 2013
+        </abbr>
+
+        <address class="vcard author">
+                By                         <a class="url fn" href="/author/iamddr.html">iamddr</a>
+        </address>
+<p>In <a href="/category/this-week-in-rust.html">This Week in Rust</a>.</p>
+
+</footer><!-- /.post-info -->      <p>Hello and welcome to the third issue of <em>This Week in Rust</em>, a weekly overview
+of Rust and its community.</p>
+<p>It has come to my attention that Github does not categorize some
+merged-by-bors pull requests as "merged" and instead categorizes it as
+"closed". This skews the numbers and also the PRs that I looked through for
+inclusion into twir. I'll no longer be including issue churn/PR numbers, and I
+hope I didn't miss any import PRs in the last two issues.</p>
+<!-- more -->
+
+<h1>What's cooking in incoming?</h1>
+<p>The last of the tree breakage has been cleaned up. The mysterious stack
+corruption was traced down by Blei to occur in jemalloc. It has been disabled
+until the real cause of the error is found. A bunch more buildbot
+configurations have been turned on for auto, to fend off more breakage. The
+tree is open, and aatch got out a new snapshot!</p>
+<p>Most of the work this week is cleanup and preparation for 0.7, but since the
+tree has been closed (and the extra auto buildbots lengthen the time it takes
+for a PR to be tested for the day it has been open), not much has landed these
+past few days, but a bunch happened earlier this week.</p>
+<h2>Notable additions, bugfixes, and cleanup</h2>
+<ul>
+<li>doener made compiles faster by emitting less useless copies and allocations
+  in <a href="https://github.com/mozilla/rust/pull/7259">7259</a></li>
+<li>aatch landed <a href="https://github.com/mozilla/rust/pull/7124">part 1</a> and <a href="https://github.com/mozilla/rust/pull/7182">part
+  2</a> of his huge trans refactor
+  effort, which make trans faster and less terrible.</li>
+<li>sully got <a href="https://github.com/mozilla/rust/pull/7203">default methods</a>
+  less broken</li>
+<li>yichoi landed a <a href="https://github.com/mozilla/rust/pull/7128">bunch</a> of
+  Android fixes.</li>
+<li>vadimcn has <a href="https://github.com/mozilla/rust/pull/7134">fixed debuginfo</a>,
+  which is super amazing. This makes it a lot easier for the GSoC student (mw)
+  to get started.</li>
+<li>doener has <a href="https://github.com/mozilla/rust/pull/7186">fixed</a> some
+  pathological behavior in how codegen creates cleanup blocks. This makes the
+  IR better, reducing compile time, and also allowing better optimization,
+  reducing binary size.</li>
+</ul>
+<p _="%" endblockquote>{% blockquote @dotdash https://github.com/mozilla/rust/pull/7259 %}
+They reduce compile times by about 10% in total.</p>
+<p _="%" endblockquote>{% blockquote @dotdash https://github.com/mozilla/rust/pull/7186 %}
+Reduces the size of librustc by about 5% and the time required to build
+it by about 10%.</p>
+<p _="%" endblockquote>{% blockquote @dotdash https://github.com/mozilla/rust/pull/7154 %}
+The resulting code for rustc is about 13% faster (measured up to and
+including the "trans" pass) and the resulting librustc is about 5%
+smaller.</p>
+<h2>Breaking changes</h2>
+<p>strcat <a href="https://github.com/mozilla/rust/pull/7263">continues</a>
+<a href="https://github.com/mozilla/rust/pull/7162">work</a> with iterators. The changes
+that landed are vector cleanups. Probably most importantly, the <code>each</code> and
+<code>eachi</code> methods are being removed. The <code>eachi</code> removal landed but the <code>each</code>
+one broke bors, so it's currently in limbo (<strong>UPDATE</strong> 6/23/2013: it landed).
+The current replacement is:</p>
+<div class="highlight"><pre><span></span><code><span class="o">//</span><span class="w"> </span><span class="n">each</span>
+<span class="k">for</span><span class="w"> </span><span class="n">your_vec</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">advance</span><span class="w"> </span><span class="o">|</span><span class="n">element</span><span class="o">|</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="o">...</span>
+<span class="p">}</span>
+<span class="o">//</span><span class="w"> </span><span class="n">eachi</span>
+<span class="k">for</span><span class="w"> </span><span class="n">your_vec</span><span class="o">.</span><span class="n">iter</span><span class="p">()</span><span class="o">.</span><span class="n">enumerate</span><span class="p">()</span><span class="o">.</span><span class="n">advance</span><span class="w"> </span><span class="o">|</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">element</span><span class="p">)</span><span class="o">|</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="o">...</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Once the rest of the iterator work is hashed out and lands, it will just be</p>
+<div class="highlight"><pre><span></span><code><span class="o">//</span><span class="w"> </span><span class="n">each</span>
+<span class="k">for</span><span class="w"> </span><span class="n">your_vec</span><span class="w"> </span><span class="o">|</span><span class="n">element</span><span class="o">|</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="o">...</span>
+<span class="p">}</span>
+<span class="o">//</span><span class="w"> </span><span class="n">eachi</span>
+<span class="k">for</span><span class="w"> </span><span class="n">your_vec</span><span class="o">.</span><span class="n">enumerate</span><span class="p">()</span><span class="w"> </span><span class="o">|</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="n">element</span><span class="p">)</span><span class="o">|</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="o">...</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>although the syntax might be slightly different (<code>for element in your_vec</code> is
+my favorite proposal).</p>
+<h1>Meetings</h1>
+<p>The <a href="https://github.com/mozilla/rust/wiki/Meeting-weekly-2013-06-18">Tuesday
+meeting's</a>
+main topics were once fn's and how namespaces work. For once fn's, graydon
+says "I'm concerned with adding new features and I want to see if we can live
+without it, I understand it is common," not yet making a decision to include
+them in the language.</p>
+<h1>Meetups</h1>
+<ul>
+<li>tjc's pre-talk and talk, "Rust: A Friendly Introduction" went very well. The
+  <a href="http://catamorphism.org/Writing/Rust-Tutorial-tjc.pdf">slides</a> are up, and
+  a recording is coming soon (hopefuly). tjc says the slides aren't as
+  understanable without the audio of the talk.</li>
+<li>nmatsakis has expressed willingness/interest in a Boston meetup sometime. If
+  you're interested, contact him on IRC or the ML.</li>
+</ul>
+<h1>Notable discourse and external projects</h1>
+<ul>
+<li><a href="http://maniagnosis.crsr.net/2013/06/mmap-and-rust-foreign-function-interface.html">mmap and the Rust FFI</a>
+  (indutny is working on mman bindings in libc, for the record. will mention
+  in next week's twir when it lands)</li>
+<li><a href="https://mail.mozilla.org/pipermail/rust-dev/2013-June/004480.html">code generation and rustc speed</a></li>
+<li><a href="http://www.reddit.com/r/rust/comments/1gs93k/rust_for_game_development/">Rust for game development?</a></li>
+<li><a href="http://www.reddit.com/r/rust/comments/1grj61/feed_us_some_low_hanging_fruit/">Feed us some low hanging fruit!</a></li>
+<li><a href="http://aatch.github.io/blog/2013/06/19/paying-technical-debt-in-rustc/">Paying Technical Debt in rustc</a></li>
+<li><a href="http://www.reddit.com/r/rust/comments/1gpbcs/what_issues_in_rust_today_effect_you_most/">What issues in Rust today effect (sic) you most?</a></li>
+<li><a href="https://mail.mozilla.org/pipermail/rust-dev/2013-June/004520.html">rustdoc rewrite and redesign</a></li>
+<li><a href="http://www.reddit.com/r/rust/comments/1gmac5/linux_rustbench_a_tool_for_profiling_memory_usage/">rust-bench: a tool for profiling memory usage</a></li>
+</ul>
+<h1>Other announcements</h1>
+<ul>
+<li>Michael Woerister (mw), the GSoC student working on debug info, has begun
+  work. His <a href="http://michaelwoerister.github.io/">project log</a> will be updated
+  weekly. I'm looking forward to a much better debug experience.</li>
+</ul>
+    </div><!-- /.entry-content -->
+
+  </article>
+</section>
+        <section id="extras" class="body">
+                <div class="blogroll">
+                        <h2>links</h2>
+                        <ul>
+                            <li><a href="https://getpelican.com/">Pelican</a></li>
+                            <li><a href="https://www.python.org/">Python.org</a></li>
+                            <li><a href="https://palletsprojects.com/p/jinja/">Jinja2</a></li>
+                            <li><a href="#">You can modify those links in your config file</a></li>
+                        </ul>
+                </div><!-- /.blogroll -->
+                <div class="social">
+                        <h2>social</h2>
+                        <ul>
+
+                            <li><a href="#">You can add links in your config file</a></li>
+                            <li><a href="#">Another social link</a></li>
+                        </ul>
+                </div><!-- /.social -->
+        </section><!-- /#extras -->
+
+        <footer id="contentinfo" class="body">
+                <address id="about" class="vcard body">
+                Proudly powered by <a rel="nofollow" href="https://getpelican.com/">Pelican</a>, which takes great advantage of <a rel="nofollow" href="https://www.python.org/">Python</a>.
+                </address><!-- /#about -->
+
+                <p>The theme is by <a rel="nofollow" href="https://www.smashingmagazine.com/2009/08/designing-a-html-5-layout-from-scratch/">Smashing Magazine</a>, thanks!</p>
+        </footer><!-- /#contentinfo -->
+
+</body>
+</html>
