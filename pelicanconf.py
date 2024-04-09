@@ -1,6 +1,6 @@
 AUTHOR = 'iamddr'
 SITENAME = 'pelican test site'
-SITEURL = ""
+SITEURL = "https://pelican-web-test.pages.dev/"
 
 PATH = "content"
 
